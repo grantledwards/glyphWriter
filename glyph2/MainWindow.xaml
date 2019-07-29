@@ -5,25 +5,38 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:glyph2"
         mc:Ignorable="d"
-        Title="Scribe" Height="697.5" Width="1172">
-    <Grid SizeChanged="Grid_SizeChanged" Background="#FFE0E0E0">
+        Title="Scribe" Height="628.5" Width="1172">
+
+    <Grid SizeChanged="Grid_SizeChanged" Background="#FFE0E0E0" Margin="0,0,0,-68">
+
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="641*"/>
-            <ColumnDefinition Width="523*"/>
+            <ColumnDefinition Width="523"/>
         </Grid.ColumnDefinitions>
-        <Canvas x:Name="workArea" Margin="10" MouseDown="workArea_MouseDown" Background="White">
+        <DockPanel Height="21" VerticalAlignment="Top" Grid.ColumnSpan="2">
+            <Menu DockPanel.Dock="Top" Height="21">
+                <MenuItem Header="_File">
+                    <MenuItem Header="_New" />
+                    <MenuItem Header="_Open" />
+                    <MenuItem Header="_Save" />
+                    <Separator />
+                    <MenuItem Header="_Exit" />
+                </MenuItem>
+            </Menu>
+        </DockPanel>
+        <Canvas x:Name="workArea" Margin="10,36,10,10" MouseDown="workArea_MouseDown" Background="White">
 
         </Canvas>
-        <Button x:Name="update" Content="UPDATE" Margin="0,10,10,0" VerticalAlignment="Top" Click="update_Click" HorizontalAlignment="Right" Width="75" Grid.Column="1" Height="22"/>
-        <Button x:Name="add" Content="+" Margin="0,10,90,0" VerticalAlignment="Top" Click="newButton_Click" HorizontalAlignment="Right" Width="75" Grid.Column="1" Height="22"/>
-        <TextBox x:Name="writerBox" Height="40" Margin="10,37,10,0" TextWrapping="Wrap" VerticalAlignment="Top" BorderBrush="Black" TextChanged="writerBox_TextChanged" Grid.Column="1" IsEnabled="False"/>
-        <Button x:Name="delButton" Content="DELETE" Margin="0,10,170,0" VerticalAlignment="Top" Click="delButton_Click" HorizontalAlignment="Right" Width="75" Grid.Column="1" Height="22"/>
-        <Canvas x:Name="previewBox" Grid.Column="1" Height="202" Margin="0,406,90,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="202" Background="White" MouseDown="previewBox_MouseDown" MouseUp="previewBox_MouseUp"/>
-        <TextBox x:Name="xGridSizeTextbox" Grid.Column="1" HorizontalAlignment="Right" Height="22" Margin="0,614,253,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="39" TextChanged="xGridSizeTextbox_TextChanged" IsEnabled="False"/>
-        <Label Content="X" Grid.Column="1" HorizontalAlignment="Right" Margin="0,614,231,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="yGridSizeTextbox" Grid.Column="1" HorizontalAlignment="Right" Height="22" Margin="0,614,187,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="39" TextChanged="yGridSizeTextbox_TextChanged" IsEnabled="False"/>
-        <Label x:Name="boxCountLabel" Content="0" Grid.Column="1" Margin="0,614,24,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="116"/>
-        <ListBox x:Name="syllableBox" ItemsSource="{Binding}" DisplayMemberPath="listToken" Grid.Column="1" Height="230" Margin="0,406,312,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="201"/>
-        
+        <Button x:Name="update" Content="UPDATE" Margin="0,36,10,0" VerticalAlignment="Top" Click="update_Click" HorizontalAlignment="Right" Width="75" Grid.Column="1" Height="22"/>
+        <Button x:Name="add" Content="+" Margin="0,36,90,0" VerticalAlignment="Top" Click="newButton_Click" HorizontalAlignment="Right" Width="75" Grid.Column="1" Height="22"/>
+        <TextBox x:Name="writerBox" Height="40" Margin="10,63,74,0" TextWrapping="Wrap" VerticalAlignment="Top" BorderBrush="Black" TextChanged="writerBox_TextChanged" Grid.Column="1" IsEnabled="False" FontSize="18" FontFamily="Trebuchet MS"/>
+        <Button x:Name="delButton" Content="DELETE" Margin="0,36,170,0" VerticalAlignment="Top" Click="delButton_Click" HorizontalAlignment="Right" Width="75" Grid.Column="1" Height="22"/>
+        <Canvas x:Name="previewBox" Grid.Column="1" Height="202" Margin="0,131,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="202" Background="White" MouseDown="previewBox_MouseDown" MouseUp="previewBox_MouseUp"/>
+        <TextBox x:Name="xGridSizeTextbox" Grid.Column="1" HorizontalAlignment="Right" Height="22" Margin="0,351,169,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="40" TextChanged="xGridSizeTextbox_TextChanged" IsEnabled="False"/>
+        <Label Content="X" Grid.Column="1" HorizontalAlignment="Right" Margin="0,351,147,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="yGridSizeTextbox" Grid.Column="1" HorizontalAlignment="Right" Height="22" Margin="0,351,103,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="40" TextChanged="yGridSizeTextbox_TextChanged" IsEnabled="False"/>
+        <ListBox x:Name="syllableBox" Grid.Column="1" Height="242" Margin="0,131,313,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="200" SelectionChanged="syllableBox_SelectionChanged"/>
+        <Button x:Name="fillGlyphButton" Content="ADD" Grid.Column="1" Margin="454,63,10,0" VerticalAlignment="Top" Height="40" IsEnabled="False" Click="fillGlyphButton_Click"/>
+
     </Grid>
 </Window>

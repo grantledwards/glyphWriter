@@ -26,19 +26,21 @@ namespace glyph2
         //int previewGridX, previewGridY;
         int previewLeftCount;
         int glyphBuffer;
+        int boxSize = 50;
+        double boxOverlap = 2;
+        int selected = -1;
 
 
-        private class glyph
+        /*private class glyph
         {
-            public string content;
-            public LinkedList<syllable> syllableList;
+            public string content;                      //written string
+            public LinkedList<syllable> syllableList;   //list of syllable objects
             Random rand;
-            public int code;
             public double worldX, worldY;
-            public int xSize, ySize;
-            public int id;
+            public int xSize, ySize;                    //dimension of full glyph in pixels
+            public int id;                              //unique id number, applied to each glyph 
             public int previewRightCount;
-            public int gridSizeX, gridSizeY;
+            public int gridSizeX, gridSizeY;            //
             public editingPanelData ePD;
 
             public glyph(int i)
@@ -47,7 +49,6 @@ namespace glyph2
                 syllableList = new LinkedList<syllable>();
                 id = i;
                 rand = new Random();
-                code = (rand.Next() % 2) + 1;
                 previewRightCount = 0;
                 ePD = new editingPanelData();
 
@@ -70,9 +71,12 @@ namespace glyph2
 
             internal void makeTokens()
             {
-                int ctr = 0;
+                if (content == null)
+                    return;
+
+                int ctr = 0;//, fake3Counter=0;
                 syllableList.Clear();
-                string[] tempTokens = content.Split(' ');
+                string[] tempTokens = content.Trim().Split(' ');
                 int numTokens = tempTokens.Length;
                 syllable newSyl;
                 int coordx=0, coordy=0;
@@ -81,13 +85,27 @@ namespace glyph2
                     if(s != "")
                     {
                         //if(sylableList.ElementAt(ctr) == null || sylableList.ElementAt(ctr) != s)
-                        newSyl = new syllable(s, ctr);
-                        newSyl.box = new previewRectangle(coordx,coordy,coordx,coordy);
-                        coordx++;
-                        if (coordx > 1)
-                        {coordx = 0;coordy++;}
-                        syllableList.AddLast(newSyl);
+                        newSyl = new syllable(s, ctr++);
+                       
+                    newSyl.box = new previewRectangle(coordx, coordy, coordx, coordy);
+                    coordx++;
+
+                    if (coordx > ePD.gridSizeX-1)
+                    { coordx = 0; coordy++; }
+                    syllableList.AddLast(newSyl);
                     }
+                }
+            }
+
+            public void setSelection(int index)
+            {
+                if (syllableList.Count <= index)
+                    return;
+                else
+                {
+                    foreach (syllable s in syllableList)
+                        s.isSelected = false;
+                    syllableList.ElementAt(index).isSelected = true;
                 }
             }
 
@@ -104,17 +122,9 @@ namespace glyph2
 
                 public string listToken { set; get; }
 
-                public previewRectangle box { set; get; }
-                /*
-                public void set(string input)
-                {
-                    token = input;
-                }
+                public Boolean isSelected { set; get; }
 
-                public string get()
-                {
-                    return token;
-                }*/
+                public previewRectangle box { set; get; }
             }
 
             public class previewRectangle
@@ -123,29 +133,13 @@ namespace glyph2
 
                 public previewRectangle(int xA,int yA,int xB,int yB)
                 {
-                    if(xB>xA)
-                    {
-                        x1 = xB;
-                        x2 = xA;
-                    }
-                    else
-                    {
-                        x1 = xA;
-                        x2 = xB;
-                    }
-                    if (yB > yA)
-                    {
-                        y1 = yB;
-                        y2 = yA;
-                    }
-                    else
-                    {
-                        y1 = yA;
-                        y2 = yB;
-                    }
+                    x1 = xA;
+                    x2 = xB;
+                    y1 = yA;
+                    y2 = yB;
                 }
             }
-        }
+        }*/
 
         private LinkedList<glyph> glyphList;
 
@@ -155,11 +149,8 @@ namespace glyph2
             rand = new Random();
 
             glyphBuffer = 10;
-            //writerBox.(writerBox.Select(0, 4))
 
             InitializeComponent();
-
-            
         }
         
         private int newRand(int mod)
@@ -167,38 +158,95 @@ namespace glyph2
 
         public void Update()
         {
+            foreach (glyph g in glyphList)
+                g.makeTokens();
+
             workArea.Children.Clear();
+            previewBox.Children.Clear();
+            if (current != null)
+            {
+                writerBox.Text = current.content;
+                populateSyllableBox();
+            }
 
-            DrawAll();
-
+            DrawWorkArea();
+            DrawPreviewBox();
+            previewBox.InvalidateVisual();
             workArea.InvalidateVisual();
         }
 
         public void UpdateCountLabel()
         {
-            boxCountLabel.Content = previewLeftCount + "/" + current.previewRightCount;
+            //boxCountLabel.Content = previewLeftCount + "/" + current.previewRightCount;
         }
 
         public void populateFrame()
         {
-            writerBox.Text = current.content;
-            syllableBox.DataContext = current.syllableList;
+            
+            //syllableBox.DataContext = current.syllableList;
         }
 
         public void addPreviewBox(int x1, int y1, int x2, int y2)
         {
+            if (syllableBox.SelectedIndex != -1)
+            {
+                //current.setSelection(syllableBox.SelectedIndex);
+                // current.
+                //MessageBox.Show("("+x1+","+y1+")("+x2+","+y2+")" );
+                current.previewNum += 1;
+                //current.selected.box = new glyph.previewRectangle(x1, y1, x2, y2);
+                current.changeBox(syllableBox.SelectedIndex , x1, y1, x2, y2);
+                UpdatePreviewBox();
+                DrawWorkArea();
+                return;
+            }
+            else
+                return;
+        }
 
+        public void populateSyllableBox()
+        {
+            syllableBox.Items.Clear();
+
+            DrawPreviewLines();
+
+            int ctr = 0; 
+            foreach(glyph.syllable cur in current.syllableList)
+            {
+                //if (syllableBox.HasItems && syllableBox.Items.GetItemAt(ctr) != null)
+                  //  syllableBox.Items.Insert(ctr, cur);
+                //else
+                    syllableBox.Items.Add(cur.generateSylStack());
+                ctr++;
+            }
         }
 
         public void UpdatePreviewBox()
         {
             previewBox.Children.Clear();
+            DrawPreviewBox();
+            //DrawPreviewLines();
+            //previewBox.InvalidateVisual();
+        }
+
+        private void DrawPreviewBox()
+        {
             DrawPreviewLines();
-            previewBox.InvalidateVisual();
+
+            if (null == current)
+                return;
+
+            foreach (glyph.syllable draw in current.syllableList)
+            {
+                makePreviewRect(draw);
+            }
         }
 
         public void DrawPreviewLines()
         {
+            if (null == current)
+                return;
+
             int i;
             for ( i = 0; i <= current.ePD.gridSizeX - 0; i++)
             {
@@ -226,7 +274,29 @@ namespace glyph2
             }
         }
 
-        public void DrawAll()
+        private void makePreviewRect(glyph.syllable draw)
+        {
+            double x1 = draw.box.x1 * ((previewBox.Width    / current.ePD.gridSizeX));
+            double y1 = draw.box.y1 * ((previewBox.Height   / current.ePD.gridSizeY));
+            double x2 = (((previewBox.Width / current.ePD.gridSizeX))   * (draw.box.x2 - draw.box.x1 + 1));
+            double y2 = (((previewBox.Height / current.ePD.gridSizeY))  * (draw.box.y2 - draw.box.y1 + 1));
+            
+            Rectangle small = new Rectangle();
+            //small.Fill = getColor(2);
+            if (draw.isSelected)
+                small.Stroke = Brushes.AliceBlue;
+            else
+                small.Stroke = getColor(0);
+
+            small.Margin = new Thickness(x1+2, y1+2, 0, 0);
+            small.RadiusX = small.RadiusY = 
+                ((previewBox.Width / Math.Max(current.ePD.gridSizeX , current.ePD.gridSizeY)) / 4);
+            small.Width = x2-4;
+            small.Height = y2-4;
+            previewBox.Children.Add(small);
+        }
+
+        public void DrawWorkArea()
         {
             int gridX = glyphBuffer, gridY = glyphBuffer;
             foreach (glyph g in glyphList)
@@ -240,16 +310,8 @@ namespace glyph2
                     gridY += g.ySize + glyphBuffer;
                 }
             }
-
-          /*  Button add = new Button();
-            add.Width = 50;
-            add.Height = 50;
-            add.Margin = new Thickness(gridX, gridY, 0, 0);
-            add.Content = "+";
-            //add.Click = "newButton_Click";
-            workArea.Children.Add(add);*/
         }
-
+        
         private void drawGlyph(glyph g, int xMargin, int yMargin)
         {
             if(current != null)
@@ -258,9 +320,10 @@ namespace glyph2
                     Rectangle highlight = new Rectangle();
 
                     highlight.Stroke = getColor(3);
+                    highlight.StrokeThickness = 2;
                     highlight.Margin = new Thickness(xMargin -5, yMargin -5, 0, 0);
                     highlight.RadiusX = highlight.RadiusY = 7;
-                    highlight.Width = highlight.Height = g.xSize + 10;
+                    highlight.Width = highlight.Height = boxSize + 10;
                     workArea.Children.Add(highlight);
                 }
 
@@ -270,22 +333,51 @@ namespace glyph2
                 blank.Fill = getColor(4);
                 blank.Margin = new Thickness(xMargin + 10, yMargin + 10, 0, 0);
                 blank.RadiusX = blank.RadiusY = 5;
-                blank.Width = blank.Height = 30;
+                blank.Width = blank.Height = boxSize * 0.6;
                 workArea.Children.Add(blank);
             }
             else
             {
+                double glyphBoundX1 = g.worldX, glyphBoundY1 = g.worldY;
+                double glyphBoundX2 = g.worldX + boxSize, glyphBoundY2 = g.worldY + boxSize;
+
                 foreach(glyph.syllable draw in g.syllableList)
                 {
+                    double relativeXMargin = draw.box.x1 * ((boxSize / g.ePD.gridSizeX));// - boxOverlap);
+                    double relativeYMargin = draw.box.y1 * ((boxSize / g.ePD.gridSizeY));// - boxOverlap);
+                    double smallXSize = (((boxSize / g.ePD.gridSizeX)) * (draw.box.x2 - draw.box.x1 + 1));// + boxOverlap;
+                    double smallYSize = (((boxSize / g.ePD.gridSizeY)) * (draw.box.y2 - draw.box.y1 + 1));// + boxOverlap;
+
+                    //preview box
+                   // if(current.id == g.id)
+                      //  makePreviewRect(draw);
+
+                    if (relativeXMargin != 0){
+                        relativeXMargin -= boxOverlap/1;
+                        smallXSize += boxOverlap/1;
+                    }
+                    if (relativeYMargin != 0){
+                        relativeYMargin -= boxOverlap/1;
+                        smallYSize += boxOverlap/1;
+                    }
+
+                    if (relativeXMargin + smallXSize < boxSize)
+                        smallXSize += boxOverlap;
+                    if (relativeYMargin + smallYSize < boxSize)
+                        smallYSize += boxOverlap;
+
+                    /*if (smallXSize + relativeXMargin < g.worldX + boxSize)
+                         smallXSize += boxOverlap;
+                    if (smallYSize + relativeYMargin < g.worldY + boxSize)
+                         smallYSize += boxOverlap;*/
+
+
                     Rectangle small = new Rectangle();
                     small.Fill = getColor(2);
                     small.Stroke = getColor(0);
-                    double smallXMargin = draw.box.x1 * ((50 / 2) - 2)
-                        , smallYMargin = draw.box.y1 * ((50 / 2) - 2)
-                        , smallXSize = (50/2)+2
-                        , smallYSize = (50/2)+2;
-                    small.Margin = new Thickness(xMargin+smallXMargin, yMargin+smallYMargin, 0, 0);
-                    small.RadiusX = small.RadiusY = 5;
+                    
+                    small.Margin = new Thickness(xMargin+relativeXMargin, yMargin+relativeYMargin, 0, 0);
+                    small.RadiusX = small.RadiusY = boxSize * 0.1;
                     small.Width = smallXSize;
                     small.Height = smallYSize;
                     workArea.Children.Add(small);
@@ -293,7 +385,7 @@ namespace glyph2
                     TextBlock lab = new TextBlock();
                     lab.Text = draw.listToken;
                     lab.FontSize = 8;
-                    lab.Margin = new Thickness(xMargin + smallXMargin +2, yMargin + smallYMargin+2, 0, 0);
+                    lab.Margin = new Thickness(xMargin + relativeXMargin + 2, yMargin + relativeYMargin + (smallYSize / 2) - 7, 0, 0);
                     lab.Foreground = getColor(0);
                     workArea.Children.Add(lab);
                 }
@@ -439,6 +531,7 @@ namespace glyph2
             glyphList.AddLast(current);
 
             writerBox.IsEnabled = true;
+            populateFrame();
             
             xGridSizeTextbox.IsEnabled = true;
             yGridSizeTextbox.IsEnabled = true;
@@ -494,7 +587,7 @@ namespace glyph2
             xStartVal = (int)(x / (previewBox.Height / current.ePD.gridSizeX));
             yStartVal = (int)(y / (previewBox.Height / current.ePD.gridSizeY));
 
-            boxCountLabel.Content = xStartVal + "/" + yStartVal;
+            //boxCountLabel.Content = xStartVal + "/" + yStartVal;
             /*for (i = 0; i <= previewGridY - 0; i++)
             {
                 Line horiz = new Line();
@@ -519,40 +612,35 @@ namespace glyph2
                 int xEndVal = (int)(x / (previewBox.Height / current.ePD.gridSizeX));
                 int yEndVal = (int)(y / (previewBox.Height / current.ePD.gridSizeY));
 
-                boxCountLabel.Content = xEndVal + "/" + yEndVal;
+                //boxCountLabel.Content = xEndVal + "/" + yEndVal;
 
                 addPreviewBox(xStartVal, yStartVal, xEndVal, yEndVal);
             }
         }
 
-        private void PreviewBoxLooper()
-        {/*
-            if (bigTimer > 5)
-            {
-                bigtimer = 0;
-                PreviewBoxLooper
-            }
-            bigTimer++;*/
-        }
-
         private void writerBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            current.content = writerBox.Text;
-            current.makeTokens();
-            UpdateCountLabel();
-            Update();
+            fillGlyphButton.IsEnabled = (writerBox.Text.Length != 0);
         }
 
         private void xGridSizeTextbox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (Int32.TryParse(xGridSizeTextbox.Text, out current.ePD.gridSizeX)) 
+            if (Int32.TryParse(xGridSizeTextbox.Text, out current.ePD.gridSizeX))
+            {
                 UpdatePreviewBox();
+                current.makeTokens();
+                Update();
+            }
         }
 
         private void yGridSizeTextbox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (Int32.TryParse(yGridSizeTextbox.Text, out current.ePD.gridSizeY))
+            {
                 UpdatePreviewBox();
+                current.makeTokens();
+                Update();
+            }
         }
                 
         private void delButton_Click(object sender, RoutedEventArgs e)
@@ -562,6 +650,22 @@ namespace glyph2
             xGridSizeTextbox.IsEnabled = false;
             yGridSizeTextbox.IsEnabled = false;
             Update();
+        }
+
+        private void syllableBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            current.setSelection(syllableBox.SelectedIndex);
+
+            selected = syllableBox.SelectedIndex;
+        }
+
+        private void fillGlyphButton_Click(object sender, RoutedEventArgs e)
+        {
+            current.content = writerBox.Text;
+            current.makeTokens();
+            //UpdateCountLabel();
+            Update();
+            //populateFrame();
         }
     }
 }
